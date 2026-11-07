@@ -1,0 +1,46 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("paypilot_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: "Not authenticated." },
+        { status: 401 }
+      );
+    }
+
+    const apiUrl = process.env.API_URL;
+
+    if (!apiUrl) {
+      return NextResponse.json(
+        { success: false, message: "Backend configuration is missing." },
+        { status: 500 }
+      );
+    }
+
+    const backendResponse = await fetch(
+      `${apiUrl}/dashboard/analytics`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    const data = await backendResponse.json();
+
+    return NextResponse.json(data, {
+      status: backendResponse.status,
+    });
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Unable to load dashboard analytics." },
+      { status: 500 }
+    );
+  }
+}

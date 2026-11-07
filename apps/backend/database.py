@@ -1,0 +1,44 @@
+
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+load_dotenv()
+
+database_url = os.getenv("DATABASE_URL")
+
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql+psycopg://",
+            1
+        )
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://",
+            "postgresql+psycopg://",
+            1
+        )
+else:
+    database_url = URL.create(
+        drivername="postgresql+psycopg",
+        username="postgres",
+        password=os.getenv("DB_PASSWORD"),
+        host="localhost",
+        port=5432,
+        database="paypilot_db",
+    )
+
+engine = create_engine(database_url, pool_pre_ping=True)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
+
+class Base(DeclarativeBase):
+    pass
